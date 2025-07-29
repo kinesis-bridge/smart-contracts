@@ -53,6 +53,16 @@
     5
   )
 
+  (defun add-validator (validator:string)
+    (with-capability (ONLY_ADMIN)
+      (with-read contract-state "default"
+        { "validators" := validators }
+        (enforce (not (contains validator validators)) "Validator already exists")
+        (update contract-state "default" { "validators": (+ validators [validator]) })
+      )
+    )
+  )
+
   (defun validators-and-threshold:object{ism-state} (message:object{hyperlane-message})
     (read contract-state "default")
   )
