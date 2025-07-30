@@ -31,7 +31,7 @@ task("pause", "Pause Bridge")
     );
 
     for (let i: number = 0; i < clientDatas.length; i++) {
-      promises[i] = pauseKDA(clientDatas[0], ba_account, ba_account);
+      promises[i] = pauseKDA(clientDatas[i], ba_account, ba_account);
     }
     await Promise.all(promises);
   });
