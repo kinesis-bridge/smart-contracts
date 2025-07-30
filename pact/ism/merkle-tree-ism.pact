@@ -60,7 +60,8 @@
       (with-read contract-state "default"
         { "validators" := validators }
         (enforce (not (contains validator validators)) "Validator already exists")
-        (update contract-state "default" { "validators": (+ validators [validator]) })
+        (write contract-state "default" { "validators": (+ validators [validator]) })
+
       )
     )
   )
