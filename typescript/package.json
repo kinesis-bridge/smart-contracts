@@ -37,6 +37,9 @@
     "validator-evm:devnet": "npx hardhat validator-evm devnet",
     "validator-evm:testnet": "npx hardhat validator-evm testnet",
     "validator-evm:mainnet": "npx hardhat validator-evm mainnet",
+    "validator-kda:devnet": "npx hardhat validator-kda devnet",
+    "validator-kda:testnet": "npx hardhat validator-kda testnet",
+    "validator-kda:mainnet": "npx hardhat validator-kda mainnet",
     "mock": "ts-node ./scripts/mocks/run-mock.ts",
     "solhint": "solhint contracts/**/*.sol"
   },
