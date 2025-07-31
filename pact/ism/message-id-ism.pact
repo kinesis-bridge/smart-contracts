@@ -56,9 +56,9 @@
   (defun add-validator (validator:string)
     (with-capability (ONLY_ADMIN)
       (with-read contract-state "default"
-        { "validators" := validators }
+        { "validators" := validators, "threshold" := threshold }
         (enforce (not (contains validator validators)) "Validator already exists")
-        (write contract-state "default" { "validators": (+ validators [validator]) })
+        (write contract-state "default" { "validators": (+ validators [validator]), "threshold": threshold })
       )
     )
   )
