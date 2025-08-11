@@ -284,7 +284,6 @@
   )
 
   (defun create-account:string (account:string guard:guard)
-    (enforce-guard guard)
     (enforce (validate-principal guard account)
       "Non-principal account names unsupported")
 
