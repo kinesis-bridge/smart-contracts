@@ -47,3 +47,19 @@
 (expect-failure "Add validator wrong access" (merkle-tree-ism.add-validator "dave"))
 (expect "Correct validators and threshold" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly" "bob"]} )
 (commit-tx)
+
+;; remove-validator ;; success
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (merkle-tree-ism.ONLY_ADMIN) ] } ])
+(merkle-tree-ism.remove-validator "bob")
+(expect "Correct validators and threshold after removing bob" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly"]} )
+(commit-tx)
+
+;; remove-validator ;; fail wrong access
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.alice, "caps": [] } ])
+(expect-failure "Remove validator wrong access" (merkle-tree-ism.remove-validator "alice"))
+(expect "Correct validators and threshold" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly"]} )
+(commit-tx)

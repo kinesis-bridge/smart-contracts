@@ -48,3 +48,19 @@
 (expect-failure "Add validator wrong access" (message-id-ism.add-validator "dave"))
 (expect "Correct validators and threshold" (message-id-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly" "bob"]} )
 (commit-tx)
+
+;; remove-validator ;; success
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (message-id-ism.ONLY_ADMIN) ] } ])
+(message-id-ism.remove-validator "bob")
+(expect "Correct validators and threshold after removing bob" (message-id-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly"]} )
+(commit-tx)
+
+;; remove-validator ;; fail wrong access
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.alice, "caps": [] } ])
+(expect-failure "Remove validator wrong access" (message-id-ism.remove-validator "alice"))
+(expect "Correct validators and threshold" (message-id-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly"]} )
+(commit-tx)
