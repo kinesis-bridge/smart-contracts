@@ -1,0 +1,152 @@
+;; First, load the basic setup (keys, constants, structs, coin, interfaces)
+(load "../utils/init-key-const.repl")
+
+;; Load core contracts (gas-oracle, validator-announce, ISM modules, IGP, mailbox, merkle-tree-hook)
+(begin-tx)
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../gas-oracle/gas-oracle.pact")
+(load "../validator-announce/validator-announce.pact")
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../ism/merkle-tree-ism.pact")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (merkle-tree-ism.ONLY_ADMIN) ] } ])
+(merkle-tree-ism.initialize [vdata.validator] data.threshold)
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../ism/domain-routing-ism.pact")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (domain-routing-ism.ONLY_ADMIN) ] } ])
+(domain-routing-ism.initialize [data.eth-domain] [merkle-tree-ism])
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../igp/igp.pact")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) ] } ])
+(igp.initialize)
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../mailbox/mailbox.pact")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (mailbox.ONLY_ADMIN) ] } ])
+(mailbox.initialize)
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../merkle/merkle-tree-hook.pact")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (merkle-tree-hook.ONLY_ADMIN) ] } ])
+(merkle-tree-hook.initialize)
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (mailbox.ONLY_ADMIN) ] } ])
+(mailbox.define-hook merkle-tree-hook)
+(commit-tx)
+
+;; Load ERC20 contracts
+(begin-tx)
+(namespace "NAMESPACE")
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../hyp-erc20/hyp-erc20.pact")
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(load "../hyp-erc20-collateral/hyp-erc20-collateral.pact")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (hyp-erc20-collateral.ONLY_ADMIN) ] } ])
+(hyp-erc20-collateral.initialize coin)
+(commit-tx)
+
+;; Set up all the necessary data for the contracts
+
+(begin-tx)
+(namespace "NAMESPACE")
+
+;; Set up the GasOracle
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (gas-oracle.ONLY_ORACLE_ADMIN) ] } ])
+(gas-oracle.set-remote-gas-data-configs 
+    [
+        {
+            "domain": data.eth-domain,
+            "token-exchange-rate": 1.0,
+            "gas-price": 0.001
+        }
+    ]
+)
+(gas-oracle.set-remote-gas-data-configs 
+    [
+        {
+            "domain": data.pol-domain,
+            "token-exchange-rate": 2.0,
+            "gas-price": 0.001
+        }
+    ]
+)
+
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (validator-announce.ONLY_ADMIN) ] } ])
+(validator-announce.announce vdata.validator vdata.sloc vdata.va-sig)
+
+;; Set up the IGP
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) ] } ])
+(igp.set-remote-gas-amount {"domain": data.eth-domain, "gas-amount": 1000.0})
+(igp.set-remote-gas-amount {"domain": data.pol-domain, "gas-amount": 1000.0})
+
+(commit-tx)
+
+(begin-tx)
+(namespace "NAMESPACE")
+
+;; Initialize the HypERC20
+;; The remote router is just some dummy address
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (hyp-erc20.ONLY_ADMIN) ] } ])
+(hyp-erc20.enroll-remote-router data.eth-domain data.eth-router)
+
+;; Initialize the HypERC20 within the Mailbox
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (mailbox.ONLY_ADMIN) ] } ])
+(mailbox.store-router hyp-erc20)
+
+;; Set up the HypERC20
+;; The remote router is just some dummy address
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (hyp-erc20-collateral.ONLY_ADMIN) ] } ])
+(hyp-erc20-collateral.enroll-remote-router data.eth-domain data.eth-router)
+
+;; Set up the HypERC20 within the Mailbox
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (mailbox.ONLY_ADMIN) ] } ])
+(mailbox.store-router hyp-erc20-collateral)
+(commit-tx)
+
+;; Create Alice's account in hyp-erc20 contract and add initial tokens
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.alice, "caps": [] } ])
+(print "Creating Alice's account...")
+(hyp-erc20.create-account bridge-keys.alice-principal (describe-keyset "NAMESPACE.alice"))
+(print "Alice's account created successfully!")
+(commit-tx)
+
+;; Verify the account was created by checking its details
+(begin-tx)
+(namespace "NAMESPACE")
+(print "Alice's account details:")
+(print (hyp-erc20.details bridge-keys.alice-principal))
+(commit-tx)

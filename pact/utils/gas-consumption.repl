@@ -1,4 +1,4 @@
-(load "../utils/setup-complete.repl")
+(load "../utils/setup-gas-consumption.repl")
 
 ;; quote-gas-payment
 (begin-tx)
@@ -183,6 +183,11 @@
         bridge-keys.alice-principal 
         igp.IGP_ACCOUNT
         (hyp-erc20.quote-gas-payment data.eth-domain))
+    (hyp-erc20.TRANSFER_REMOTE 
+        data.eth-domain 
+        bridge-keys.alice-principal 
+        bridge-keys.alice 
+        10.0)
 ]}])
 (env-chain-data { "sender": bridge-keys.alice-principal })
 (mailbox.dispatch hyp-erc20 data.eth-domain bridge-keys.alice 10.0)
