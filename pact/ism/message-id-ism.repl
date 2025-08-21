@@ -32,3 +32,19 @@
 (namespace "NAMESPACE")
 (expect "Correct threshold" (message-id-ism.get-threshold data.message) 1 )
 (commit-tx)
+
+;; add-validator ;; success
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (message-id-ism.ONLY_ADMIN) ] } ])
+(message-id-ism.add-validator "bob")
+(expect "Correct validators and threshold" (message-id-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly" "bob"]} )
+(commit-tx)
+
+;; add-validator ;; fail wrong access
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.alice, "caps": [] } ])
+(expect-failure "Add validator wrong access" (message-id-ism.add-validator "dave"))
+(expect "Correct validators and threshold" (message-id-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly" "bob"]} )
+(commit-tx)
