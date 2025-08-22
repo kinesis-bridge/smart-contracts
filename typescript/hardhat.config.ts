@@ -16,6 +16,7 @@ import "./scripts/deployments/verify/tasks/verify-core-bridge.ts";
 import "./scripts/deployments/verify/tasks/verify-warp-route.ts";
 import "./scripts/deployments/validator/tasks/add-evm-validator.ts";
 import "./scripts/deployments/validator/tasks/add-kda-validator.ts";
+import "./scripts/deployments/validator/tasks/remove-validator.ts";
 
 import dotenv from "dotenv";
 dotenv.config();

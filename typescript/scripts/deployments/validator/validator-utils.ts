@@ -65,3 +65,28 @@ export const addKDAValidator = async (
   );
   console.log(result);
 };
+
+export const removeEVMValidator = async (
+  client: IClientWithData,
+  sender: IAccountWithKeys,
+  account: IAccountWithKeys,
+  validatorAddress: `0x${string}`,
+) => {
+  const command = `(namespace "${NAMESPACES[client.phase as keyof IDomains]}")
+      (merkle-tree-ism.remove-validator "${validatorAddress}")`;
+
+  const capabilities: ICapability[] = [
+    { name: "coin.GAS" },
+    {
+      name: `${NAMESPACES[client.phase as keyof IDomains]}.merkle-tree-ism.ONLY_ADMIN`,
+    },
+  ];
+  const result = await submitSignedTxWithCap(
+    client,
+    sender,
+    account,
+    command,
+    capabilities,
+  );
+  console.log(result);
+};
