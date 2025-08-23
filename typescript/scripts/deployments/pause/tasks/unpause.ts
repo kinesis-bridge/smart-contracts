@@ -31,7 +31,7 @@ task("unpause", "Unpause Bridge")
     );
 
     for (let i: number = 0; i < clientDatas.length; i++) {
-      promises[i] = unpauseKDA(clientDatas[0], ba_account, ba_account);
+      promises[i] = unpauseKDA(clientDatas[i], ba_account, ba_account);
     }
     await Promise.all(promises);
   });

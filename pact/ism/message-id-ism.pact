@@ -53,6 +53,26 @@
     5
   )
 
+  (defun add-validator (validator:string)
+    (with-capability (ONLY_ADMIN)
+      (with-read contract-state "default"
+        { "validators" := validators, "threshold" := threshold }
+        (enforce (not (contains validator validators)) "Validator already exists")
+        (write contract-state "default" { "validators": (+ validators [validator]), "threshold": threshold })
+      )
+    )
+  )
+
+  (defun remove-validator (validator:string)
+    (with-capability (ONLY_ADMIN)
+      (with-read contract-state "default"
+        { "validators" := validators, "threshold" := threshold }
+        (enforce (contains validator validators) "Validator does not exist")
+        (write contract-state "default" { "validators": (filter (lambda (x) (not (= x validator))) validators), "threshold": threshold })
+      )
+    )
+  )
+
   (defun validators-and-threshold:object{ism-state} (message:object{hyperlane-message})
     (read contract-state "default")
   )
