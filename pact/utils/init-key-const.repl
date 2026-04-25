@@ -21,6 +21,7 @@
 (module bridge-keys GOVERNANCE
   (defcap GOVERNANCE () true)
   (defconst bridge "368820f80c324bbc7c2b0610688a7da43e39f91d118732671cd9c7500ff43cca")
+  (defconst validators "0077bb28368c42f72ff12174cdec2a89796c3d356d67d8a02a4a6556db53ccb8")
   (defconst treasury "6be2f485a7af75fedb4b7f153a903f7e6000ca4aa501179c91a2450b777bd2a7")
   (defconst alice "3a9dd532d73dace195dbb64d1dba6572fb783d0fdd324685e32fbda2f89f99a6")
   (defconst alice-principal "k:3a9dd532d73dace195dbb64d1dba6572fb783d0fdd324685e32fbda2f89f99a6")
@@ -92,6 +93,9 @@
 
 (env-data { "bridge-admin-keyset": { "keys": [ bridge-keys.bridge ], "pred": "keys-all" } })
 (define-keyset "NAMESPACE.bridge-admin" (read-keyset "bridge-admin-keyset"))
+
+(env-data { "validators-keyset": { "keys": [ bridge-keys.validators ], "pred": "keys-all" } })
+(define-keyset "NAMESPACE.validators" (read-keyset "validators-keyset"))
 
 (env-data { "gas-oracle-admin-keyset": { "keys": [ bridge-keys.bridge ], "pred": "keys-all" } })
 (define-keyset "NAMESPACE.gas-oracle-admin" (read-keyset "gas-oracle-admin-keyset"))

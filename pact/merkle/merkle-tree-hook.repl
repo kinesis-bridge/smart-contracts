@@ -108,7 +108,7 @@
 }
 ])
 
-(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (validator-announce.ONLY_ADMIN) ] } ])
+(env-sigs [ { "key": bridge-keys.validators, "caps": [ (validator-announce.ONLY_VALIDATORS) ] } ])
 (validator-announce.announce vdata.validator vdata.sloc vdata.va-sig)
 
 (env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) ] } ])

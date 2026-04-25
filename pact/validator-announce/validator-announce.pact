@@ -6,8 +6,11 @@
 
 
 ;; ValidatorAnnounce is a special smart contract that is used only by backend.
-;; Relayer should have an ability to fetch validator's signatures. This 
+;; Relayer should have an ability to fetch validator's signatures. This
 ;; module stores locations of validator's signatures.
+
+;; Note: At the difference of the SOlidity contract. We don't check the validity of the signature here (TODO ?)
+;;       But, the contract is restricted to members of the validator keyset.
 
 (module validator-announce GOVERNANCE
   
@@ -34,7 +37,7 @@
   ;; Capabilities
   (defcap GOVERNANCE () (enforce-guard "NAMESPACE.upgrade-admin"))
 
-  (defcap ONLY_ADMIN () (enforce-guard "NAMESPACE.bridge-admin"))
+  (defcap ONLY_VALIDATORS () (enforce-guard "NAMESPACE.validators"))
 
   ;; Events
   (defcap VALIDATOR_ANNOUNCEMENT
@@ -48,7 +51,7 @@
   
   (defun announce:bool (validator:string storage-location:string signature:string)
     @doc "Announces a validator signature storage location"
-    (with-capability (ONLY_ADMIN)
+    (with-capability (ONLY_VALIDATORS)
       (let
         (
           (current-hash:string (hash (+ validator storage-location)))

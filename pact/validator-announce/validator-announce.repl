@@ -8,6 +8,9 @@
 (commit-tx)
 (print "\nLoaded ValidatorAnnounce")
 
+; Now allow to make announcement by using the validators keyset
+(env-sigs [ { "key": bridge-keys.validators, "caps": [(NAMESPACE.validator-announce.ONLY_VALIDATORS)] } ])
+
 ;; declare data for test use
 (begin-tx)
 (module data1 GOVERNANCE
