@@ -44,5 +44,9 @@ jobs:
           chmod +x .bin/pact
       - name: Add Pact to PATH
         run: echo "PATH=$PATH:$GITHUB_WORKSPACE/.bin" >> $GITHUB_ENV
+
+      - name: Rebuild the tokens
+        run: ./shell/gen_tokens.sh
+
       - name: Run tests
-        run: ./shell/ci.sh
+        run: ./shell/test.sh

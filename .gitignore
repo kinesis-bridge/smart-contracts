@@ -3,3 +3,4 @@ node_modules
 .vscode
 .pc-history
 .DS_Store
+pact_target

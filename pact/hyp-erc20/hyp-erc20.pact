@@ -285,8 +285,8 @@
   )
 
   (defun enforce-reserved:bool (account:string guard:guard)
-  "Enforce that a principal account matches to it's guard"
-  (if (is-principal account)
+    "Enforce that a principal account matches to it's guard"
+    (if (is-principal account)
       (enforce (validate-principal guard account)
                 (format "Reserved protocol guard violation: {}" [(typeof-principal account)]))
       true)
