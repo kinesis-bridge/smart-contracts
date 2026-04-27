@@ -1,0 +1,91 @@
+(load "../utils/init-key-const.repl")
+
+
+; -------------------------------------------------------------------------------------
+; Load KIA
+(begin-tx)
+; KIA Namespace
+(define-namespace "KIA_NAMESPACE" test-ns.NAMESPACE_GUARD test-ns.NAMESPACE_GUARD)
+; For compatbility the KIA inside
+(env-data {'ks:["reporter"]})
+(define-keyset "__NS__.report" (read-keyset 'ks))
+; Dependency of KIA
+(define-namespace "free" test-ns.NAMESPACE_GUARD test-ns.NAMESPACE_GUARD)
+(namespace "free")
+(module util-time G
+    (defcap G() true)
+    (defconst GENESIS:time (time "2019-10-30T00:01:00Z"))
+)
+
+(namespace "KIA_NAMESPACE")
+(load "kadena-info-access/pact/kia.pact")
+(create-table storage)
+(commit-tx)
+; ----------------------------------------------------------------------------------------
+
+
+(begin-tx)
+(env-data { "init": true })
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [] } ])
+(namespace "NAMESPACE")
+(load "gas-oracle-eth-kia.pact")
+(commit-tx)
+(print "\nLoaded Gas Oracle")
+
+;set-remote-gas-data: failure
+(begin-tx)
+(namespace "NAMESPACE")
+(expect-failure "Manually setting value is not allowed" "Manually setting value is not allowed"
+    (gas-oracle-eth-kia.set-remote-gas-data-configs [
+        {
+            "domain": 1,
+            "token-exchange-rate": 5.0,
+            "gas-price": 20.0
+        }
+        {
+            "domain": 2,
+            "token-exchange-rate": 8.0,
+            "gas-price": 15.0
+        }]
+    )
+)
+(commit-tx)
+
+;set-remote-gas-data: success
+(begin-tx)
+
+(env-keys ["reporter"])
+
+(KIA_NAMESPACE.kia-oracle.set-multiple-values
+    ["ETH/USD" "KDA/USD" "EthGas"]
+    [(time "2026-04-27T11:40:08Z") (time "2026-04-27T11:40:08Z") (time "2026-04-27T11:40:08Z")]
+    [80.0 2.0 110.0])
+
+(namespace "NAMESPACE")
+(let
+    (
+        (result:object{gas-oracle-iface.remote-gas-data} (gas-oracle-eth-kia.get-exchange-rate-and-gas-price 1))
+    )
+    (expect "Token Exchange Rate Set" 40.0 (at "token-exchange-rate" result))
+    (expect "Gas Price Set" (* 110.0 0.000000001) (at "gas-price" result))
+)
+(commit-tx)
+
+;set-remote-gas-data: success twice
+(begin-tx)
+(env-keys ["reporter"])
+
+(KIA_NAMESPACE.kia-oracle.set-multiple-values
+    ["ETH/USD" "KDA/USD" "EthGas"]
+    [(time "2026-04-27T11:40:08Z") (time "2026-04-27T11:40:08Z") (time "2026-04-27T11:40:08Z")]
+    [40.0 2.0 55.0])
+
+(namespace "NAMESPACE")
+(let
+    (
+        (result:object{gas-oracle-iface.remote-gas-data} (gas-oracle-eth-kia.get-exchange-rate-and-gas-price 1))
+    )
+    (expect "Token Exchange Rate Set" 20.0 (at "token-exchange-rate" result))
+    (expect "Gas Price Set" (* 55.0 0.000000001)  (at "gas-price" result))
+)
+(commit-tx)

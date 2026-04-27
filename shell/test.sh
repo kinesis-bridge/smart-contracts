@@ -10,6 +10,8 @@ pact $SRC_DIR/faucet/faucet.repl
 
 pact $SRC_DIR/gas-oracle/gas-oracle.repl
 
+pact $SRC_DIR/gas-oracle/gas-oracle-eth-kia.repl
+
 pact $SRC_DIR/hyp-erc20/hyp-erc20.repl
 pact $SRC_DIR/hyp-erc20-collateral/hyp-erc20-collateral.repl
 

@@ -1,0 +1,3 @@
+[submodule "pact/gas-oracle/kadena-info-access"]
+	path = pact/gas-oracle/kadena-info-access
+	url = https://github.com/kda-community/kadena-info-access
