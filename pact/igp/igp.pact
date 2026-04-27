@@ -86,7 +86,8 @@
         {'token-exchange-rate := token-exchange-rate,
          'gas-price:= gas-price}
 
-        (* (* gas-amount gas-price) token-exchange-rate)))
+        (round (* (* gas-amount gas-price) token-exchange-rate)
+               (coin.precision))))
   )
 
   (defun pay-for-gas:bool (id:string domain:integer gas-amount:decimal)
