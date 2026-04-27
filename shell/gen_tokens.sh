@@ -26,7 +26,7 @@ gen_syn kb-ETH 18
 gen_syn hyp-erc20 18
 
 
-## And then the collateeals
+## And then the collaterals
 {
   jq -r '.mainnet[] | "\(.symbol) \(.decimals)"' typescript/scripts/utils/tokenObjectsKDA.json
 } | while read symbol decimals; do gen_col kb-$symbol $decimals; done
