@@ -244,7 +244,7 @@ export const deployIGP = async (
 
   const initCommand = `(namespace "${NAMESPACES[client.phase as keyof IDomains]}")
       (igp.initialize)
-      (igp.set-remote-gas-amount {"domain": ${remoteGasAmount.domain}, "gas-amount": ${remoteGasAmount.gasAmount}})`;
+      (igp.set-remote-data ${remoteGasAmount.domain} ${remoteGasAmount.gasAmount} gas-oracle)`;
 
   const capabilities: ICapability[] = [
     { name: "coin.GAS" },
