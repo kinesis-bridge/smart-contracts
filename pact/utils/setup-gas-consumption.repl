@@ -84,7 +84,7 @@
 
 ;; Set up the GasOracle
 (env-sigs [ { "key": bridge-keys.bridge, "caps": [ (gas-oracle.ONLY_ORACLE_ADMIN) ] } ])
-(gas-oracle.set-remote-gas-data-configs 
+(gas-oracle.set-remote-gas-data-configs
     [
         {
             "domain": data.eth-domain,
@@ -93,7 +93,7 @@
         }
     ]
 )
-(gas-oracle.set-remote-gas-data-configs 
+(gas-oracle.set-remote-gas-data-configs
     [
         {
             "domain": data.pol-domain,
@@ -108,8 +108,8 @@
 
 ;; Set up the IGP
 (env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) ] } ])
-(igp.set-remote-gas-amount {"domain": data.eth-domain, "gas-amount": 1000.0})
-(igp.set-remote-gas-amount {"domain": data.pol-domain, "gas-amount": 1000.0})
+(igp.set-remote-dat data.eth-domain 1000.0 gas-oracle)
+(igp.set-remote-dat data.pol-domain 1000.0 gas-oracle)
 
 (commit-tx)
 

@@ -57,10 +57,17 @@ The **igp.pact** module manages gas payments required to relay messages to desti
 
   - `initialize`: Sets up the treasury account used to collect gas fees.
 
+- **Setup**
+  - `set-remote-data`: Sets up the remote spent gas amount per operation + Oracle implementation. The oracle is needed to know current ETH, KDA and GasPrice ob Ethereum.
+
 - **Gas Payment Calculation**
   - `quote-gas-payment`: Calculates the gas fee based on the remote domain’s gas price and the current token exchange rate. This function reads the gas amount from a dedicated table and applies a formula to determine the required payment.
 - **Gas Payment Processing**
   - `pay-for-gas`: Transfers the computed gas fee from the sender’s account to the treasury and emits a `GAS_PAYMENT` event to log the transaction.
+
+Note: There are two implementations for the Oracle:
+  - The basic one
+  - And a smartest one, which uses the information from KIA (Kadena Information Access)
 
 ---
 

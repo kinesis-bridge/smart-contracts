@@ -67,7 +67,7 @@
 (validator-announce.announce vdata.validator vdata.sloc vdata.va-sig)
 
 (env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) ] } ])
-(igp.set-remote-gas-amount {"domain": data.eth-domain, "gas-amount": 1000.0})
+(igp.set-remote-data data.eth-domain 1000.0 gas-oracle)
 (commit-tx)
 
 ;; initialize

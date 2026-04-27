@@ -44,23 +44,23 @@
 (begin-tx)
 (namespace "NAMESPACE")
 (env-sigs [ { "key": bridge-keys.alice, "caps": [] } ])
-(expect-failure "Cannot interact with igp directly" (igp.set-remote-gas-amount {"domain": 3, "gas-amount": 1000.0}))
+(expect-failure "Cannot interact with igp directly" (igp.set-remote-data 3 1000.0 gas-oracle))
 (commit-tx)
 
 ;; set-remote-gas-amount ;; sucess
 (begin-tx)
 (namespace "NAMESPACE")
 (env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) ] } ])
-(igp.set-remote-gas-amount {"domain": 1, "gas-amount": 500.0})
-(igp.set-remote-gas-amount {"domain": 2, "gas-amount": 500.0})
+(igp.set-remote-data 1 500.0 gas-oracle)
+(igp.set-remote-data 2 500.0 gas-oracle)
 (commit-tx)
 
 ;; set-remote-gas-amount ;; sucess twice
 (begin-tx)
 (namespace "NAMESPACE")
 (env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) ] } ])
-(igp.set-remote-gas-amount {"domain": 1, "gas-amount": 1000.0})
-(igp.set-remote-gas-amount {"domain": 2, "gas-amount": 1000.0})
+(igp.set-remote-data 1 1000.0 gas-oracle)
+(igp.set-remote-data 2 1000.0 gas-oracle)
 (commit-tx)
 
 ;; quote-gas-payment ;; success
@@ -92,16 +92,4 @@
 (igp.pay-for-gas "10" 2 igp.AUTO-AMOUNT)
 (expect "Bob has paid 2 KDA" 998.0 (coin.get-balance "bob"))
 (expect "Treasury has recieved 2 KDA" 3.0 (coin.get-balance igp.IGP_ACCOUNT))
-(commit-tx)
-
-;; withdraw-kda ;; success
-(begin-tx)
-(namespace "NAMESPACE")
-(expect "Charly has 1000 KDA" 1000.0 (coin.get-balance "charly"))
-(expect "Treasury has 3 KDA" 3.0 (coin.get-balance igp.IGP_ACCOUNT))
-(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (igp.ONLY_ADMIN) (coin.TRANSFER igp.IGP_ACCOUNT "charly" 3.0) ] } ])
-(env-chain-data { "sender": igp.IGP_ACCOUNT })
-(igp.withdraw-kda "charly" 3.0)
-(expect "Charly has withdrawn 3 KDA" 1003.0 (coin.get-balance "charly"))
-(expect "Treasury has transfered 3 KDA" 0.0 (coin.get-balance igp.IGP_ACCOUNT))
 (commit-tx)

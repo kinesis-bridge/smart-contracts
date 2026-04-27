@@ -10,14 +10,15 @@
 (module igp GOVERNANCE
   (implements igp-iface)
 
-  (use igp-iface)
-
   (defconst AUTO-AMOUNT 0.0)
 
-  ;; Tables
-  (deftable contract-state:{igp-state})
+  (defschema igp-data-schema
+    domain: integer
+    oracle:module{gas-oracle-iface}
+    gas-amount:decimal
+  )
 
-  (deftable gas-amount-table:{remote-gas-amount})
+  (deftable igp-data-table:{igp-data-schema})
 
   ;; Capabilities
   (defcap GOVERNANCE () (enforce-guard "NAMESPACE.upgrade-admin"))
@@ -29,7 +30,6 @@
     (
       message-id:string
       destination-domain:integer
-      gas-amount:decimal
       kda-amount:decimal
     )
     @doc "Emitted when gas payment is transferred to treasury"
@@ -39,34 +39,22 @@
   ;; Treasury
   (defconst IGP_ACCOUNT
     (create-principal
-      (keyset-ref-guard "NAMESPACE.bridge-admin")
+      (keyset-ref-guard "NAMESPACE.relayers")
       ))
 
   (defun initialize ()
-    (coin.create-account IGP_ACCOUNT (keyset-ref-guard "NAMESPACE.bridge-admin"))
-  )
+      true)
 
-  (defun set-remote-gas-amount (config:object{remote-gas-amount-input})
+  (defun set-remote-data:bool (domain:integer gas-amount:decimal oracle:module{gas-oracle-iface})
     (with-capability (ONLY_ADMIN)
-      (bind config
-        {
-          "domain" := domain,
-          "gas-amount" := gas-amount
-        }
-        (write gas-amount-table (int-to-str 10 domain)
+      (write igp-data-table (int-to-str 10 domain)
           {
-            "gas-amount": gas-amount
-          }
-        )
+            'domain: domain,
+            'gas-amount: gas-amount,
+            'oracle: oracle
+          })
       )
       true
-    )
-  )
-
-  (defun withdraw-kda (address:string amount:decimal)
-    (with-capability (ONLY_ADMIN)
-        (coin.transfer IGP_ACCOUNT address amount)
-    )
   )
 
   ;; An example: we transfer from Kadena to Ethereum
@@ -88,21 +76,17 @@
   ;; Kadenx tx price = 1.428 * 3.84e-3 = 0.00548352 (0.002851 USD)
 
 
-  (defun domain-gas-amount:decimal (domain:integer)
-    @doc "Gas amount spent by a process transaction on the other side "
-    (with-read gas-amount-table (int-to-str 10 domain) {"gas-amount" := gas-amount}
-      gas-amount))
-
   (defun quote-gas-payment:decimal (domain:integer)
     @doc "Return the gas payment amount in KDA"
-    (bind (gas-oracle.get-exchange-rate-and-gas-price domain)
-      {
-        "token-exchange-rate" := token-exchange-rate,
-        "gas-price" := gas-price
-      }
-      (* (* (domain-gas-amount domain) gas-price)
-         token-exchange-rate)
-    )
+    (with-read igp-data-table (int-to-str 10 domain)
+      {'gas-amount := gas-amount,
+       'oracle := oracle:module{gas-oracle-iface}}
+
+      (bind (oracle::get-exchange-rate-and-gas-price domain)
+        {'token-exchange-rate := token-exchange-rate,
+         'gas-price:= gas-price}
+
+        (* (* gas-amount gas-price) token-exchange-rate)))
   )
 
   (defun pay-for-gas:bool (id:string domain:integer gas-amount:decimal)
@@ -110,15 +94,15 @@
     ; Only 0.0 (for Automatic is supported for the third parameters).
     ; We don't remove it for backward compatibility reasons
     (enforce (= AUTO-AMOUNT gas-amount) "Only automatically determined gas amount is supported")
-    (coin.transfer (at "sender" (chain-data)) IGP_ACCOUNT (quote-gas-payment domain))
-    (emit-event (GAS_PAYMENT id domain (domain-gas-amount domain) (quote-gas-payment domain)))
-  )
 
+    (let ((amount (quote-gas-payment domain)))
+      (coin.transfer (at "sender" (chain-data)) IGP_ACCOUNT amount)
+      (emit-event (GAS_PAYMENT id domain amount)))
+  )
 )
 
 (if (read-msg "init")
   [
-    (create-table NAMESPACE.igp.contract-state)
-    (create-table NAMESPACE.igp.gas-amount-table)
+    (create-table NAMESPACE.igp.igp-data-table)
   ]
   "Upgrade complete")
