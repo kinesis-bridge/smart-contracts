@@ -1,0 +1,18 @@
+code: (n_e595727b657fbbb3b8e362a05a7bb8d12865c1ff.igp.set-remote-data 1 270000.0 n_e595727b657fbbb3b8e362a05a7bb8d12865c1ff.gas-oracle-eth-kia)
+
+meta:
+  chainId: "{{chain}}"
+  sender: "{{gas-payer}}"
+  gasLimit: 1000
+  gasPrice: 0.00000001
+  ttl: 86400
+
+networkId: {{network}}
+signers:
+  - public: {{gas-payer-key}}
+    caps:
+      - name: coin.GAS
+        args: []
+
+  - public: {{admin-key-a}}
+    caps: []
