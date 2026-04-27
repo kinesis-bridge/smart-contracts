@@ -163,7 +163,7 @@
                   "nonce": (+ old-nonce 1)
                }
             )
-            (igp.pay-for-gas id destination (quote-dispatch destination))
+            (igp.pay-for-gas id destination igp.AUTO-AMOUNT)
 
             (with-capability (POST_DISPATCH_CALL id)
                (with-read dependencies "default"
