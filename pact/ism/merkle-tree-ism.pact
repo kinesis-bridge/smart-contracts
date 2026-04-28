@@ -23,12 +23,12 @@
 
   (defun initialize:string (validators:[string] threshold:integer)
     (with-capability (ONLY_ADMIN)
-      (if (and 
-            (= 
-              (length validators) 
+      (if (and
+            (=
+              (length validators)
               (length (distinct validators))
             )
-            (> threshold 0) 
+            (> threshold 0)
           )
           (insert contract-state "default"
             {
@@ -41,7 +41,7 @@
     )
   )
 
-  ;; notice: Hyperlane ISM Types: 
+  ;; notice: Hyperlane ISM Types:
   ;  UNUSED = 0,
   ;  ROUTING = 1,
   ;  AGGREGATION = 2,
@@ -57,23 +57,30 @@
 
   (defun add-validator (validator:string)
     (with-capability (ONLY_ADMIN)
-      (with-read contract-state "default"
-        { "validators" := validators, "threshold" := threshold }
+      (with-read contract-state "default" { "validators" := validators}
         (enforce (not (contains validator validators)) "Validator already exists")
-        (write contract-state "default" { "validators": (+ validators [validator]), "threshold": threshold })
+        (update contract-state "default" { "validators": (+ validators [validator])})
       )
     )
   )
 
   (defun remove-validator (validator:string)
     (with-capability (ONLY_ADMIN)
-      (with-read contract-state "default"
-        { "validators" := validators, "threshold" := threshold }
+      (with-read contract-state "default" { "validators" := validators}
         (enforce (contains validator validators) "Validator does not exist")
-        (write contract-state "default" { "validators": (filter (lambda (x) (not (= x validator))) validators), "threshold": threshold })
+        (update contract-state "default" { "validators": (filter (not? (= validator)) validators)})
       )
     )
   )
+
+  (defun set-threshold (new-threshold:integer)
+    (with-capability (ONLY_ADMIN)
+      (with-read contract-state "default" { "validators" := validators, "threshold" := threshold }
+          (enforce (and? (>= (length validators)) (< 0) new-threshold) "Invalid threshold")
+          (update contract-state "default" {'threshold: new-threshold})))
+  )
+
+
 
   (defun validators-and-threshold:object{ism-state} (message:object{hyperlane-message})
     (read contract-state "default")
@@ -96,7 +103,7 @@
       threshold
     )
   )
-  
+
 )
 
 (if (read-msg "init")

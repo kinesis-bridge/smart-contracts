@@ -63,3 +63,38 @@
 (expect-failure "Remove validator wrong access" (merkle-tree-ism.remove-validator "alice"))
 (expect "Correct validators and threshold" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly"]} )
 (commit-tx)
+
+
+;; set-threshold ;; fail wrong access
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.alice, "caps": [] } ])
+(expect-failure "Set-threshold" (merkle-tree-ism.set-threshold 1))
+(expect "Correct validators and threshold" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly" ]} )
+(commit-tx)
+
+;; set-threshold ;; bad threshikd
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (merkle-tree-ism.ONLY_ADMIN) ] } ])
+(expect-failure "Set-threshold" "Invalid threshold" (merkle-tree-ism.set-threshold 0))
+(expect "Correct validators and threshold" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly" ]} )
+(commit-tx)
+
+
+;; set-threshold ;; bad threshikd
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (merkle-tree-ism.ONLY_ADMIN) ] } ])
+(expect-failure "Set-threshold" "Invalid threshold" (merkle-tree-ism.set-threshold 10))
+(expect "Correct validators and threshold" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 1,"validators": ["alice" "charly" ]} )
+(commit-tx)
+
+
+;; set-threshold ;; success
+(begin-tx)
+(namespace "NAMESPACE")
+(env-sigs [ { "key": bridge-keys.bridge, "caps": [ (merkle-tree-ism.ONLY_ADMIN) ] } ])
+(merkle-tree-ism.set-threshold 2)
+(expect "Correct validators and threshold" (merkle-tree-ism.validators-and-threshold data.message) {"threshold": 2,"validators": ["alice" "charly" ]} )
+(commit-tx)
