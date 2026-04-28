@@ -6,6 +6,8 @@ cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
 SRC_DIR=pact
 
+pact $SRC_DIR/utils/eth-address-utils.repl
+
 pact $SRC_DIR/faucet/faucet.repl
 
 pact $SRC_DIR/gas-oracle/gas-oracle.repl
