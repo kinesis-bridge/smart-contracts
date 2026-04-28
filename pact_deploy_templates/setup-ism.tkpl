@@ -1,0 +1,24 @@
+code: |-
+  (use n_e595727b657fbbb3b8e362a05a7bb8d12865c1ff.merkle-tree-ism)
+  (remove-validator "0x71d575ce96b5e21ed1eda6c9fc8813393e0be432")
+  (remove-validator "0x0833c504bf33ea8aa05de107ca55be09b1569b2a")
+  (remove-validator "0x7d80f807ad9830bbb7dec79818b2c03b1890fd6a")
+  (add-validator "0x3acc899778Eb5f8B686F107db19386FdDF1aAb9E")
+  (set-threshold 1)
+
+meta:
+  chainId: "{{chain}}"
+  sender: "{{gas-payer}}"
+  gasLimit: 1000
+  gasPrice: 0.00000001
+  ttl: 86400
+
+networkId: {{network}}
+signers:
+  - public: {{gas-payer-key}}
+    caps:
+      - name: coin.GAS
+        args: []
+
+  - public: {{admin-key-a}}
+    caps: []
