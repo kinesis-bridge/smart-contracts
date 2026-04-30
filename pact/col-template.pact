@@ -41,16 +41,6 @@
     (enforce (> amount 0.0) "Transfer must be positive.")
   )
 
-  (defcap TRANSFER_TO:bool
-    (
-      target-chain:string
-    )
-    (let
-      ((chain (str-to-int target-chain)))
-      (enforce (and (<= chain 19) (>= chain 0)) "Invalid target chain ID")
-    )
-  )
-
   ;; Events
   (defcap SENT_TRANSFER_REMOTE
     (
@@ -72,14 +62,6 @@
     @event true
   )
 
-  (defcap DESTINATION_GAS_SET
-    (
-      domain:integer
-      gas:decimal
-    )
-    @doc "Emitted when a domain's destination gas is set."
-    @event true
-  )
 
   ;; Treasury
   (defcap COLLATERAL () true)
