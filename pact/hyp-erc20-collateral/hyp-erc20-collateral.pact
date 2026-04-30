@@ -105,6 +105,20 @@
     )
   )
 
+  ;;; CHAIN TRANSLATIONS FEATURES
+  (defconst SUPPORTED_CHAINS [])
+
+  (defun adjust-chain:string (requested-chain:string)
+    @doc "Adjust the destination chain when a message is received"
+    (cond
+      ; Case 1, SUPPORTED_CHAINS is not filled= it means ALL chains are supported
+      ((= 0 (length SUPPORTED_CHAINS)) requested-chain)
+      ; Case 2, the requested chain is supported
+      ((contains requested-chain SUPPORTED_CHAINS) requested-chain)
+      ; Otherwise we use the first supported chain
+      (at 0 SUPPORTED_CHAINS))
+  )
+
   (defun precision:integer () 18)
 
   (defun get-adjusted-amount:decimal (amount:decimal)
@@ -187,11 +201,12 @@
         (router-address:string (has-remote-router origin))
       )
       (enforce (= sender router-address) "Sender is not router")
-      (let ((adjusted-amount:decimal (get-adjusted-amount-back amount)))
+      (let ((adjusted-amount:decimal (get-adjusted-amount-back amount))
+            (adjusted-chain (adjust-chain (int-to-str 10 chainId))))
         (with-capability (INTERNAL)
-          (if (= (int-to-str 10 chainId) (at "chain-id" (chain-data)))
+          (if (= adjusted-chain (at "chain-id" (chain-data)))
             (transfer-create-to reciever receiver-guard adjusted-amount)
-            (transfer-create-to-crosschain reciever receiver-guard adjusted-amount (int-to-str 10 chainId))
+            (transfer-create-to-crosschain reciever receiver-guard adjusted-amount adjusted-chain)
           )
         )
         (emit-event (RECEIVED_TRANSFER_REMOTE origin reciever adjusted-amount))

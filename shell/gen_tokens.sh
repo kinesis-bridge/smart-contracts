@@ -8,27 +8,27 @@ SRC_DIR=pact
 
 gen_syn() {
    echo "Generate Synthetic token: $1"
-   m4 -DSYMBOL=$1 -DPRECISION=$2 <(echo 'changequote([[, ]])dnl')  "$SRC_DIR/syn-template.pact" >  $SRC_DIR/hyp-erc20/$1.pact
+   m4 -DSYMBOL=$1 -DPRECISION=$2 -D_SUPPORTED_CHAINS_=$3 <(echo 'changequote([[, ]])dnl')  "$SRC_DIR/syn-template.pact" >  $SRC_DIR/hyp-erc20/$1.pact
 }
 
 gen_col() {
    echo "Generate Collateral token: $1"
-   m4 -DSYMBOL=$1 -DPRECISION=$2 <(echo 'changequote([[, ]])dnl')  "$SRC_DIR/col-template.pact" >  $SRC_DIR/hyp-erc20-collateral/$1.pact
+   m4 -DSYMBOL=$1 -DPRECISION=$2 -D_SUPPORTED_CHAINS_=$3 <(echo 'changequote([[, ]])dnl')  "$SRC_DIR/col-template.pact" >  $SRC_DIR/hyp-erc20-collateral/$1.pact
 }
 
 ## Build the synthetics first
 {
-  jq -r '.mainnet[] | "\(.symbol) \(.decimals)"' typescript/scripts/utils/tokenObjectsEVM.json
-} | while read symbol decimals; do gen_syn kb-$symbol $decimals; done
+  jq -r '.mainnet[] | "\(.symbol) \(.decimals) \(.chains)"' typescript/scripts/utils/tokenObjectsEVM.json
+} | while read symbol decimals chains; do gen_syn kb-$symbol $decimals $chains; done
 # The ETH token (not ERC-20)
-gen_syn kb-ETH 18
+gen_syn kb-ETH 18 '["2","4"]'
 #And the test file
-gen_syn hyp-erc20 18
+gen_syn hyp-erc20 18 "[]"
 
 
 ## And then the collaterals
 {
-  jq -r '.mainnet[] | "\(.symbol) \(.decimals)"' typescript/scripts/utils/tokenObjectsKDA.json
-} | while read symbol decimals; do gen_col kb-$symbol $decimals; done
+  jq -r '.mainnet[] | "\(.symbol) \(.decimals) \(.chains)"' typescript/scripts/utils/tokenObjectsKDA.json
+} | while read symbol decimals chains; do gen_col kb-$symbol $decimals $chains; done
 #And the test file
-gen_col hyp-erc20-collateral 18
+gen_col hyp-erc20-collateral 18 "[]"
