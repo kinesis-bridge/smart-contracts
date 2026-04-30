@@ -24,7 +24,7 @@
   (defcap GOVERNANCE () (enforce-guard "NAMESPACE.upgrade-admin"))
 
   (defcap ONLY_ADMIN () (enforce-guard "NAMESPACE.bridge-admin"))
-  
+
   (defun initialize:[string] (domains:[integer] isms:[module{ism-iface}])
     (with-capability (ONLY_ADMIN)
     (enforce (= (length domains) (length isms)) "length mismatch")
@@ -64,18 +64,11 @@
   )
 
   (defun get-module:module{ism-iface} (origin:integer)
-    (let 
-      ((existing-row (contains (int-to-str 10 origin) (keys domain-routing))))
-      (enforce existing-row (format "no ISM found for origin {}" [origin]))
-    )
-    (with-read domain-routing (int-to-str 10 origin)
-      {
-        "ism" := ism:module{ism-iface},
-        "active" := active
-      }
-      (enforce active (format "no ISM found for origin {}" [origin]))
-      ism
-    )
+    (with-default-read domain-routing (int-to-str 10 origin) {'active:false} {'active:=active}
+      (enforce active (format "no ISM found for origin {}" [origin])))
+
+    (with-read domain-routing (int-to-str 10 origin) {"ism" := ism:module{ism-iface}}
+      ism)
   )
 
   (defun route:module{ism-iface} (message:object{hyperlane-message})
@@ -93,14 +86,14 @@
     (let
       ((ism:module{ism-iface} (route message)))
       (ism::get-validators message)
-    )  
+    )
   )
 
   (defun get-threshold:integer (message:object{hyperlane-message})
     (let
       ((ism:module{ism-iface} (route message)))
       (ism::get-threshold message)
-    )  
+    )
   )
 )
 
