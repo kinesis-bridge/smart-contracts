@@ -13,14 +13,14 @@
 ;;       But, the contract is restricted to members of the validator keyset.
 
 (module validator-announce GOVERNANCE
-  
+
   ;; Schemas
   (defschema validators
     known:bool
   )
 
   (defschema locations
-    storage-location:string    
+    storage-location:string
   )
 
   (defschema hashes
@@ -48,7 +48,7 @@
     @doc "Emitted when a new validator announcement is made"
     @event true
   )
-  
+
   (defun announce:bool (validator:string storage-location:string signature:string)
     @doc "Announces a validator signature storage location"
     (with-capability (ONLY_VALIDATORS)
@@ -68,7 +68,7 @@
             {
               "known": true
             }
-          ) 
+          )
         )
       )
 
@@ -80,7 +80,7 @@
         {
           "known" := known
         }
-        (if (= known false) 
+        (if (= known false)
           (insert known-validators validator
             {
               "known": true
@@ -89,12 +89,12 @@
           "Validator already known"
         )
       )
-      
+
       ;; Store the storage location
-      (insert storage-locations validator
+      (write storage-locations validator
         {
           "storage-location": storage-location
-        }  
+        }
       )
       (emit-event (VALIDATOR_ANNOUNCEMENT validator storage-location))
     )
