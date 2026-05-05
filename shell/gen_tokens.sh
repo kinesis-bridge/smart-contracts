@@ -32,7 +32,7 @@ gen_syn hyp-erc20 18 "[]"
 
 ## And then the collaterals
 {
-  jq -r '.mainnet[] | "\(.symbol) \(.decimals) \(.chains)"' typescript/scripts/utils/tokenObjectsKDA.json
+  jq -r '.mainnet[] | "\(.symbol) \(.precision) \(.chains)"' typescript/scripts/utils/tokenObjectsKDA.json
 } | while read symbol decimals chains; do gen_col kb-$symbol $symbol $decimals $chains; done
 #And the test file
 gen_col hyp-erc20-collateral hyp-erc20-collateral 18 "[]"
