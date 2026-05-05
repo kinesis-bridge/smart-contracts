@@ -89,7 +89,11 @@
 (expect "Treasury has 0 KDA" 1.0 (coin.get-balance igp.IGP_ACCOUNT))
 (env-sigs [ { "key": bridge-keys.bob, "caps": [ (coin.TRANSFER "bob" igp.IGP_ACCOUNT (igp.quote-gas-payment 2)) ] } ])
 (env-chain-data { "sender": "bob" })
+(env-events true)
+
 (igp.pay-for-gas "10" 2 igp.AUTO-AMOUNT)
 (expect "Bob has paid 2 KDA" 998.0 (coin.get-balance "bob"))
 (expect "Treasury has recieved 2 KDA" 3.0 (coin.get-balance igp.IGP_ACCOUNT))
+
+(expect "Event generated" ["10" 2 1000 2000000000000] (at 'params (at 1 (env-events true))))
 (commit-tx)

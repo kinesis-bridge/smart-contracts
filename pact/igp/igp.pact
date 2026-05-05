@@ -12,6 +12,9 @@
 
   (defconst AUTO-AMOUNT 0.0)
 
+  ; This is used for Event generation => We choose to emit event with all decimals
+  (defconst KDA_DECIMAL_FACTOR (^ 10.0 (coin.precision)))
+
   (defschema igp-data-schema
     domain: integer
     oracle:module{gas-oracle-iface}
@@ -30,7 +33,9 @@
     (
       message-id:string
       destination-domain:integer
-      kda-amount:decimal
+      ; This is what is expected by the backend
+      gas-amount:integer
+      kda-amount:integer
     )
     @doc "Emitted when gas payment is transferred to treasury"
     @event true
@@ -56,6 +61,15 @@
       )
       true
   )
+
+
+  (defun kda-to-int:integer (x:decimal)
+    (compose (* KDA_DECIMAL_FACTOR) floor x))
+
+  (defun gas-in-int:integer (domain:integer)
+    (with-read igp-data-table (int-to-str 10 domain)
+      {'gas-amount := x}
+      (floor x)))
 
   ;; An example: we transfer from Kadena to Ethereum
   ;; Gas amount required = 300_000 units
@@ -98,7 +112,9 @@
 
     (let ((amount (quote-gas-payment domain)))
       (coin.transfer (at "sender" (chain-data)) IGP_ACCOUNT amount)
-      (emit-event (GAS_PAYMENT id domain amount)))
+      (emit-event (GAS_PAYMENT id domain
+                               (gas-in-int domain)
+                               (kda-to-int amount))))
   )
 )
 
