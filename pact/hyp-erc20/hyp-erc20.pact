@@ -72,15 +72,6 @@
     @event true
   )
 
-  (defcap DESTINATION_GAS_SET
-    (
-      domain:integer
-      gas:decimal
-    )
-    @doc "Emitted when a domain's destination gas is set."
-    @event true
-  )
-
   (defun precision:integer () 18)
 
   (defun get-adjusted-amount:decimal (amount:decimal)
