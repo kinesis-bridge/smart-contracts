@@ -29,6 +29,8 @@
   (defconst bob "6b9dd532d73dace195dbba4d1dba65d2fb785d0fdd324685e32fbda2f89f99ff")
   (defconst bob-principal "k:6b9dd532d73dace195dbba4d1dba65d2fb785d0fdd324685e32fbda2f89f99ff")
   (defconst charly "93aa059ae40a81c152832af0d0aa9d104ae6d4a5f309f2f0720087c9cf5f88ac")
+  (defconst trent "3a9c80e21dd1fd260344620f0f1cb65961e4d6497f70e24750105c1b3303b9bf")
+  (defconst trent-principal "k:3a9c80e21dd1fd260344620f0f1cb65961e4d6497f70e24750105c1b3303b9bf")
 )
 (commit-tx)
 

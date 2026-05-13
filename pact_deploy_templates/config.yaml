@@ -3,4 +3,5 @@ chain: "2"
 gas-payer: null
 gas-payer-key: null
 init_bool: false
+upgrade_v2_bool: false
 network: mainnet01

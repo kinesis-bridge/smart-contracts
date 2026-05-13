@@ -2,7 +2,7 @@
 
 (enforce-guard (keyset-ref-guard "NAMESPACE.bridge-admin"))
 
-(module SYMBOL GOVERNANCE
+(module hyp-erc20 GOVERNANCE
   (implements fungible-v2)
 
   (implements router-iface)
@@ -72,7 +72,7 @@
     @event true
   )
 
-  (defun precision:integer () PRECISION)
+  (defun precision:integer () 18)
 
   (defun get-adjusted-amount:decimal (amount:decimal)
     (* amount (dec (^ 10 (precision))))
@@ -83,7 +83,7 @@
   )
 
   ;;; CHAIN TRANSLATIONS FEATURES
-  (defconst SUPPORTED_CHAINS _SUPPORTED_CHAINS_)
+  (defconst SUPPORTED_CHAINS [])
 
   (defun adjust-chain:string (requested-chain:string)
     @doc "Adjust the destination chain when a message is received"
@@ -155,7 +155,7 @@
       receiver-guard:guard
       amount:decimal
     )
-    (require-capability (mailbox.ONLY_MAILBOX_CALL SYMBOL origin sender chainId reciever receiver-guard amount))
+    (require-capability (mailbox.ONLY_MAILBOX_CALL hyp-erc20 origin sender chainId reciever receiver-guard amount))
     (let
       (
         (router-address:string (has-remote-router origin))
@@ -175,8 +175,7 @@
     )
   )
 
-ifdef([[_FREEZABLE_]],
-  ;;;;;;;;;;;;;;;;;;;;;;;;;; FREEZE FEATURES ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;; FREEZE FEATURES ;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (defschema frozen-account
     frozen:bool)
 
@@ -210,12 +209,12 @@ ifdef([[_FREEZABLE_]],
           (update accounts seized-account {'balance:0.0})
           (update accounts dst-account {'balance: (+ dst-balance seized-balance)}))))
   )
-)
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ERC20 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (defun transfer-from (sender:string amount:decimal)
     (require-capability (INTERNAL))
-    ifdef([[_FREEZABLE_]],(enforce-not-frozen sender))
+    (enforce-not-frozen sender)
     (with-default-read accounts sender { "balance": 0.0 } { "balance" := balance }
         (enforce (<= amount balance) (format "Cannot burn more funds than the account has available: {}" [balance]))
         (update accounts sender { "balance": (- balance amount)})
@@ -282,7 +281,7 @@ ifdef([[_FREEZABLE_]],
         (property (!= sender receiver))
       ]
 
-    ifdef([[_FREEZABLE_]],(enforce-not-frozen sender))
+    (enforce-not-frozen sender)
     (with-capability (TRANSFER sender receiver amount)
       (with-read accounts sender { "balance" := sender-balance }
         (enforce (<= amount sender-balance) "Insufficient funds.")
@@ -294,7 +293,7 @@ ifdef([[_FREEZABLE_]],
   (defun transfer-create:string (sender:string receiver:string receiver-guard:guard amount:decimal)
     @model [ (property (= 0.0 (column-delta accounts "balance"))) ]
     (enforce-reserved receiver receiver-guard)
-    ifdef([[_FREEZABLE_]],(enforce-not-frozen sender))
+    (enforce-not-frozen sender)
 
     (with-capability (TRANSFER sender receiver amount)
       (with-read accounts sender { "balance" := sender-balance }
@@ -390,7 +389,7 @@ ifdef([[_FREEZABLE_]],
   (defpact transfer-crosschain:string (sender:string receiver:string receiver-guard:guard target-chain:string amount:decimal)
     (step
       (with-capability (TRANSFER_XCHAIN sender receiver amount target-chain)
-        ifdef([[_FREEZABLE_]],(enforce-not-frozen sender))
+        (enforce-not-frozen sender)
         (with-read accounts sender { "balance" := sender-balance }
           (enforce (<= amount sender-balance) "Insufficient funds.")
           (update accounts sender { "balance": (- sender-balance amount) }))
@@ -419,12 +418,12 @@ ifdef([[_FREEZABLE_]],
 )
 
 (cond
-  ((read-msg "init") [ (create-table NAMESPACE.SYMBOL.accounts)
-                       (create-table NAMESPACE.SYMBOL.routers)
-                       ifdef([[_FREEZABLE_]], (create-table NAMESPACE.SYMBOL.frozen-accounts))
+  ((read-msg "init") [ (create-table NAMESPACE.hyp-erc20.accounts)
+                       (create-table NAMESPACE.hyp-erc20.routers)
+                       (create-table NAMESPACE.hyp-erc20.frozen-accounts)
                        "Initialized"
                       ])
-  ((read-msg "upgrade-to-v2") [ ifdef([[_FREEZABLE_]], (create-table NAMESPACE.SYMBOL.frozen-accounts))
+  ((read-msg "upgrade-to-v2") [ (create-table NAMESPACE.hyp-erc20.frozen-accounts)
                                 "Upgraded-to-v2"
                               ])
   ["Upgrade Complete"]

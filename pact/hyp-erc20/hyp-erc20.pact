@@ -175,10 +175,12 @@
     )
   )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ERC20 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ERC20 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (defun transfer-from (sender:string amount:decimal)
     (require-capability (INTERNAL))
+    
     (with-default-read accounts sender { "balance": 0.0 } { "balance" := balance }
         (enforce (<= amount balance) (format "Cannot burn more funds than the account has available: {}" [balance]))
         (update accounts sender { "balance": (- balance amount)})
@@ -245,6 +247,7 @@
         (property (!= sender receiver))
       ]
 
+    
     (with-capability (TRANSFER sender receiver amount)
       (with-read accounts sender { "balance" := sender-balance }
         (enforce (<= amount sender-balance) "Insufficient funds.")
@@ -256,6 +259,7 @@
   (defun transfer-create:string (sender:string receiver:string receiver-guard:guard amount:decimal)
     @model [ (property (= 0.0 (column-delta accounts "balance"))) ]
     (enforce-reserved receiver receiver-guard)
+    
 
     (with-capability (TRANSFER sender receiver amount)
       (with-read accounts sender { "balance" := sender-balance }
@@ -351,6 +355,7 @@
   (defpact transfer-crosschain:string (sender:string receiver:string receiver-guard:guard target-chain:string amount:decimal)
     (step
       (with-capability (TRANSFER_XCHAIN sender receiver amount target-chain)
+        
         (with-read accounts sender { "balance" := sender-balance }
           (enforce (<= amount sender-balance) "Insufficient funds.")
           (update accounts sender { "balance": (- sender-balance amount) }))
@@ -378,9 +383,14 @@
             })))))
 )
 
-(if (read-msg "init")
-  [
-    (create-table NAMESPACE.hyp-erc20.accounts)
-    (create-table NAMESPACE.hyp-erc20.routers)
-  ]
-  "Upgrade complete")
+(cond
+  ((read-msg "init") [ (create-table NAMESPACE.hyp-erc20.accounts)
+                       (create-table NAMESPACE.hyp-erc20.routers)
+                       
+                       "Initialized"
+                      ])
+  ((read-msg "upgrade-to-v2") [ 
+                                "Upgraded-to-v2"
+                              ])
+  ["Upgrade Complete"]
+)
