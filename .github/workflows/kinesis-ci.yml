@@ -39,10 +39,11 @@ jobs:
           submodules: true
       - name: Install Pact
         run: |
-          PACT_VERSION="5.1"
-          curl -LO https://github.com/kadena-io/pact-5/releases/download/$PACT_VERSION/pact-$PACT_VERSION-linux-x64.tar.gz
+          PACT_VERSION="5.4ce"
+          PACT_HASH="b769"
+          curl -LO https://github.com/kda-community/pact-5/releases/download/$PACT_VERSION/pact-$PACT_VERSION-$PACT_HASH-ubuntu-22.04.tar.gz
           mkdir -p .bin
-          tar -xvzf pact-$PACT_VERSION-linux-x64.tar.gz -C .bin ./pact
+          tar -xvzf pact-$PACT_VERSION-$PACT_HASH-ubuntu-22.04.tar.gz -C .bin pact
           chmod +x .bin/pact
       - name: Add Pact to PATH
         run: echo "PATH=$PATH:$GITHUB_WORKSPACE/.bin" >> $GITHUB_ENV
