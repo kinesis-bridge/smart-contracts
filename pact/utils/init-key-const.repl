@@ -23,6 +23,7 @@
   (defconst bridge "368820f80c324bbc7c2b0610688a7da43e39f91d118732671cd9c7500ff43cca")
   (defconst validators "0077bb28368c42f72ff12174cdec2a89796c3d356d67d8a02a4a6556db53ccb8")
   (defconst relayers "091207d8d16e098cb30161ec788f1a7892cfc0736fc64b55a372bdbbde3abdc6")
+  (defconst throttling "4ad257fc9f9bd63c3abe9e7fe491d6b42d4bdd0d7b5101d3a015bf710aa62461")
   (defconst treasury "6be2f485a7af75fedb4b7f153a903f7e6000ca4aa501179c91a2450b777bd2a7")
   (defconst alice "3a9dd532d73dace195dbb64d1dba6572fb783d0fdd324685e32fbda2f89f99a6")
   (defconst alice-principal "k:3a9dd532d73dace195dbb64d1dba6572fb783d0fdd324685e32fbda2f89f99a6")
@@ -102,6 +103,9 @@
 
 (env-data { "relayers-keyset": { "keys": [ bridge-keys.relayers ], "pred": "keys-all" } })
 (define-keyset "NAMESPACE.relayers" (read-keyset "relayers-keyset"))
+
+(env-data { "throttling-keyset": { "keys": [ bridge-keys.throttling ], "pred": "keys-all" } })
+(define-keyset "NAMESPACE.throttling" (read-keyset "throttling-keyset"))
 
 (env-data { "gas-oracle-admin-keyset": { "keys": [ bridge-keys.bridge ], "pred": "keys-all" } })
 (define-keyset "NAMESPACE.gas-oracle-admin" (read-keyset "gas-oracle-admin-keyset"))

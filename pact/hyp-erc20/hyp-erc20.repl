@@ -240,3 +240,103 @@
 (expect "Alice balance after the dispatch" 999.0 (hyp-erc20-collateral.get-balance bridge-keys.alice-principal))
 (commit-tx)
 
+;Throttling tests
+(begin-tx)
+(namespace "NAMESPACE")
+(env-chain-data { "block-time" : (time "2026-05-14T00:00:00Z") })
+; Try to set throttling settings without being admin
+(expect-failure "Not admin" "Keyset failure" (hyp-erc20.set-throttling 5.0 5.0))
+
+; Ste the throttling
+(env-sigs [ { "key": bridge-keys.throttling, "caps": [(hyp-erc20.SET_THROTTLING)]}])
+
+(hyp-erc20.set-throttling 5.0 5.0)
+(commit-tx)
+
+
+(begin-tx)
+(namespace "NAMESPACE")
+(env-chain-data { "block-time" : (time "2026-05-14T00:00:00Z") })
+
+
+; Check the current allowed maximum value => Should be 5.0
+(expect "Current allowed value should be 5.0" 5.0 (hyp-erc20.max-remote-transfer-amount))
+
+;; Try a too big transfer remote
+
+(env-sigs [ { "key": bridge-keys.alice, "caps": [
+    (hyp-erc20.TRANSFER_REMOTE data.eth-domain bridge-keys.alice-principal bridge-keys.alice 5.1)
+    (coin.TRANSFER bridge-keys.alice-principal igp.IGP_ACCOUNT (hyp-erc20.quote-gas-payment data.eth-domain))
+]}])
+
+(env-chain-data { "sender": bridge-keys.alice-principal })
+(expect-failure "Throttling fails" "Throttling restrictions" (mailbox.dispatch hyp-erc20 data.eth-domain bridge-keys.alice 5.1))
+
+;Try now with a lower amount
+(env-sigs [ { "key": bridge-keys.alice, "caps": [
+    (hyp-erc20.TRANSFER_REMOTE data.eth-domain bridge-keys.alice-principal bridge-keys.alice 4.9)
+    (coin.TRANSFER bridge-keys.alice-principal igp.IGP_ACCOUNT (hyp-erc20.quote-gas-payment data.eth-domain))
+]}])
+(env-chain-data { "sender": bridge-keys.alice-principal })
+(mailbox.dispatch hyp-erc20 data.eth-domain bridge-keys.alice 4.9)
+(expect "Current allowed value should be 0.1" 0.1 (hyp-erc20.max-remote-transfer-amount))
+
+; Try now with 0.2
+(env-sigs [ { "key": bridge-keys.alice, "caps": [
+    (hyp-erc20.TRANSFER_REMOTE data.eth-domain bridge-keys.alice-principal bridge-keys.alice 0.2)
+    (coin.TRANSFER bridge-keys.alice-principal igp.IGP_ACCOUNT (hyp-erc20.quote-gas-payment data.eth-domain))
+]}])
+(env-chain-data { "sender": bridge-keys.alice-principal })
+(expect-failure "Throttling fails" "Throttling restrictions" (mailbox.dispatch hyp-erc20 data.eth-domain bridge-keys.alice 0.2))
+
+
+(expect "Current allowed value should still be  0.1" 0.1 (hyp-erc20.max-remote-transfer-amount))
+
+(commit-tx)
+
+; Wait for 12 Hours (we should have recovered 2.5)
+(begin-tx)
+(namespace "NAMESPACE")
+(env-chain-data { "block-time" : (time "2026-05-14T12:00:00Z") })
+
+(print (hyp-erc20.max-remote-transfer-amount))
+(expect-that "Current allowed value should be 2.6" (and? (< 2.59) (> 2.61)) (hyp-erc20.max-remote-transfer-amount))
+
+; Test for 2.52 => Should fail
+(env-sigs [ { "key": bridge-keys.alice, "caps": [
+    (hyp-erc20.TRANSFER_REMOTE data.eth-domain bridge-keys.alice-principal bridge-keys.alice 2.62)
+    (coin.TRANSFER bridge-keys.alice-principal igp.IGP_ACCOUNT (hyp-erc20.quote-gas-payment data.eth-domain))
+]}])
+
+(env-chain-data { "sender": bridge-keys.alice-principal })
+(expect-failure "Throttling fails" "Throttling restrictions" (mailbox.dispatch hyp-erc20 data.eth-domain bridge-keys.alice 2.62))
+
+; Test for 2.59 => Should success
+(env-sigs [ { "key": bridge-keys.alice, "caps": [
+    (hyp-erc20.TRANSFER_REMOTE data.eth-domain bridge-keys.alice-principal bridge-keys.alice 2.59)
+    (coin.TRANSFER bridge-keys.alice-principal igp.IGP_ACCOUNT (hyp-erc20.quote-gas-payment data.eth-domain))
+]}])
+
+(env-chain-data { "sender": bridge-keys.alice-principal })
+(print (hyp-erc20.max-remote-transfer-amount))
+(mailbox.dispatch hyp-erc20 data.eth-domain bridge-keys.alice 2.59)
+
+(commit-tx)
+
+
+;Wait now for a little bit more than 24 hours => we should have recovered full capacity
+(begin-tx)
+(namespace "NAMESPACE")
+(env-chain-data { "block-time" : (time "2026-05-15T12:00:01Z") })
+(expect "Current allowed value should be 5.0" 5.0 (hyp-erc20.max-remote-transfer-amount))
+
+; Test for 5.0
+(env-sigs [ { "key": bridge-keys.alice, "caps": [
+    (hyp-erc20.TRANSFER_REMOTE data.eth-domain bridge-keys.alice-principal bridge-keys.alice 5.0)
+    (coin.TRANSFER bridge-keys.alice-principal igp.IGP_ACCOUNT (hyp-erc20.quote-gas-payment data.eth-domain))
+]}])
+
+(env-chain-data { "sender": bridge-keys.alice-principal })
+(mailbox.dispatch hyp-erc20 data.eth-domain bridge-keys.alice 5.0)
+
+(commit-tx)

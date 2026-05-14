@@ -14,15 +14,27 @@
 
   (use router-iface)
 
+  ;; Throttling schema
+  (defschema throttling
+    bucket-size:decimal ; In tokens
+    bucket-rate:decimal ; In tokens / second
+    bucket-last-state:decimal ; In tokens
+    last-transfer:time
+  )
+
   ;; Tables
   (deftable accounts:{fungible-v2.account-details})
 
   (deftable routers:{router-address})
 
+  (deftable throttling-table:{throttling})
+
   ;; Capabilities
   (defcap GOVERNANCE () (enforce-guard "NAMESPACE.upgrade-admin"))
 
   (defcap ONLY_ADMIN () (enforce-guard "NAMESPACE.bridge-admin"))
+
+  (defcap SET_THROTTLING () (enforce-guard "NAMESPACE.throttling"))
 
   (defcap INTERNAL () true)
 
@@ -130,16 +142,75 @@
     (igp.quote-gas-payment domain)
   )
 
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Throttling functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ; Use the leaky bucket alogrithm
+  (defun min:decimal (x:decimal y:decimal)
+    (if (< x y) x y))
+
+  (defun ramp:decimal (x:decimal)
+    @doc "Ramp function: Return 0 if negative, x otherwise"
+    (if (< x 0.0) 0.0 x))
+
+  (defun now:time ()
+    (at 'block-time (chain-data)))
+
+  (defun elapsed-since (x:time)
+    @doc "Time elapsed since x"
+    (diff-time (now) x))
+
+  (defun bucket-current-state:decimal ()
+    @doc "Return the current bucket state at the current block time \
+        \ computed as:  previous-fill-state MINUS leaking during that time"
+    (with-read throttling-table "default" {'bucket-rate:=rate,
+                                           'bucket-last-state:=fill-state,
+                                           'last-transfer:=last-transfer}
+      (ramp (- fill-state (* rate (elapsed-since last-transfer)))))
+  )
+
+  (defun max-remote-transfer-amount:decimal ()
+    @doc "Maximum transferable amount at the current time given throttling restrictions"
+    (with-read throttling-table "default" {'bucket-size:=total-size}
+      (- total-size (bucket-current-state)))
+  )
+
+  (defun enforce-transferable-amount:bool (amount:decimal)
+    (enforce (<= amount (max-remote-transfer-amount)) "Throttling restrictions"))
+
+  (defun init-throttling:string ()
+    (with-capability (ONLY_ADMIN)
+      (insert throttling-table "default" {'bucket-size: 1000000000.0,
+                                          'bucket-rate:1000000000.0,
+                                          'bucket-last-state:0.0,
+                                          'last-transfer:(now)})))
+
+  (defun set-throttling:string (bucket-size:decimal bucket-rate-per-day:decimal)
+    @doc "Admin function to set throttling restrictions"
+    (with-capability (SET_THROTTLING)
+      (update throttling-table "default" {'bucket-size: bucket-size,
+                                          'bucket-last-state: (min bucket-size (bucket-current-state)),  ; Make sure we don't exceed new bucket_size
+                                          'bucket-rate: (round (/ bucket-rate-per-day (days 1)) 12)}))
+  )
+
+  (defun update-throttling:string (amount:decimal)
+    @doc "Update throttling data after a transfer"
+    (require-capability (INTERNAL))
+    (update throttling-table "default"
+        {'bucket-last-state:(+ (bucket-current-state) amount),
+         'last-transfer:(now)})
+  )
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; TokenRouter ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (defun transfer-remote:string (destination:integer sender:string recipient-tm:string amount:decimal)
     (with-capability (TRANSFER_REMOTE destination sender recipient-tm amount)
+      (enforce-transferable-amount amount)
       (let
         (
           (receiver-router:string (has-remote-router destination))
         )
         (with-capability (INTERNAL)
           (transfer-from sender amount)
+          (update-throttling amount)
         )
         receiver-router
       )
@@ -421,9 +492,13 @@
   ((read-msg "init") [ (create-table NAMESPACE.hyp-erc20.accounts)
                        (create-table NAMESPACE.hyp-erc20.routers)
                        (create-table NAMESPACE.hyp-erc20.frozen-accounts)
+                       (create-table NAMESPACE.hyp-erc20.throttling-table)
+                       (init-throttling)
                        "Initialized"
                       ])
   ((read-msg "upgrade-to-v2") [ (create-table NAMESPACE.hyp-erc20.frozen-accounts)
+                                (create-table NAMESPACE.hyp-erc20.throttling-table)
+                                (init-throttling)
                                 "Upgraded-to-v2"
                               ])
   ["Upgrade Complete"]
